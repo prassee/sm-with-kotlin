@@ -11,21 +11,29 @@ import kotlinx.coroutines.channels.*
  * [6 7 8]
  * ..
  */
-class TumblingWindow<T>(private val windowLen: Int, private val stream: Channel<T>) {
-    private var internalState = mutableListOf<T>()
+class TumblingWindow<T>(private val windowLen: Int, val aggFn: (List<T>) -> Unit) {
+    private var cache = mutableListOf<T>()
+    private var state: WindowState = WindowState.INIT
     
-    suspend fun processWindow(items: (List<T>) -> Unit) {
-        stream.consumeEach {
-            if (internalState.size == windowLen) {
-                items(internalState)
-                clearState()
+    fun processData(t: T) {
+        when (state) {
+            WindowState.INIT -> {
+                cache.add(t)
+                transitState()
             }
-            internalState.add(it)
-         }
+            WindowState.ACCEPT -> {
+                if (cache.size == windowLen) {
+                   aggFn(cache)
+                   transitState()
+                   cache.clear()
+                }
+                cache.add(t)
+            }
+        }
     }
 
-    fun clearState() {
-        internalState.clear()
+    private fun transitState() {
+        state = state.signal()
     }
 }
 
@@ -33,9 +41,19 @@ class TumblingWindow<T>(private val windowLen: Int, private val stream: Channel<
 utility functions to create windows
 */
 object WindowFunctions {
-
-    fun <T> createTumbling(interval: Int, stream: Channel<T>): TumblingWindow<T> {
-        return TumblingWindow<T>(interval, stream)
+    fun <T> createTumbling(interval: Int, aggFn: (List<T>) -> Unit): TumblingWindow<T> {
+        return TumblingWindow<T>(interval, aggFn)
     }
 }
+
+enum class WindowState {
+    INIT {
+        override fun signal() = ACCEPT
+    },
+
+    ACCEPT {
+        override fun signal() = INIT
+    };
+
+    abstract fun signal(): WindowState
 }

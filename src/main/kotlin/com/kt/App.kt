@@ -3,18 +3,27 @@
  */
 package com.kt
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
-fun main() = runBlocking {
-
-    val channel = Channel<Int>()
+fun main() = runBlocking { // this: CoroutineScope
+    val intStream = Channel<Int>()
     launch {
-        for (i in 1..16) channel.send(i)
+        println("streaming in to channel")
+        for (i in 1..16) intStream.send(i)
+        intStream.close()
     }
 
-    WindowFunctions.createTumbling<Int>(3, channel).processWindow { it ->
-        println(it)
+    // Creates a coroutine scope
+    coroutineScope {
+           launch {
+               val tumblingWindow = WindowFunctions.createTumbling(3, { it: List<Int> -> println(it.sum()) })
+               intStream.consumeEach {
+                   tumblingWindow.processData(it)
+               }
+           }
     }
+    
+    // This line is not printed until the nested launch completes
+    println("Coroutine scope is over")
 }
