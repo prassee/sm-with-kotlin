@@ -17,21 +17,24 @@ fun main() = runBlocking { // this: CoroutineScope
 
     // Creates a coroutine scope
     coroutineScope {
-           // launch {
-           //     val tumblingWindow = WindowFunctions.createTumbling(3, { it: List<Int> -> println(it.sum()) })
-           //     intStream.consumeEach {
-           //         tumblingWindow.processData(it)
-           //     }
-           // }
-
-           launch {
-               val slidingWindow = WindowFunctions.createSliding(3, { it: List<Int> -> println(it.sum()) })
-               intStream.consumeEach {
-                   slidingWindow.processData(it)
-               }
-           }
+           tumblingWindow(intStream)
+           slidingWindow(intStream)
     }
 
     // This line is not printed until the nested launch completes
     println("Coroutine scope is over")
+}
+
+suspend fun slidingWindow(intStream: Channel<Int>) {
+               val slidingWindow = WindowFunctions.createSliding(3, { it: List<Int> -> println(it.sum()) })
+               intStream.consumeEach {
+                   slidingWindow.processData(it)
+               }
+}
+
+suspend fun tumblingWindow(intStream: Channel<Int>) {
+     val tumblingWindow = WindowFunctions.createTumbling(3, { it: List<Int> -> println(it.sum()) })
+               intStream.consumeEach {
+                    tumblingWindow.processData(it)
+                }
 }
