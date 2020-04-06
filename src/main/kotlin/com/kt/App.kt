@@ -3,6 +3,7 @@
  */
 package com.kt
 
+import java.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 
@@ -16,14 +17,21 @@ fun main() = runBlocking { // this: CoroutineScope
 
     // Creates a coroutine scope
     coroutineScope {
+           // launch {
+           //     val tumblingWindow = WindowFunctions.createTumbling(3, { it: List<Int> -> println(it.sum()) })
+           //     intStream.consumeEach {
+           //         tumblingWindow.processData(it)
+           //     }
+           // }
+
            launch {
-               val tumblingWindow = WindowFunctions.createTumbling(3, { it: List<Int> -> println(it.sum()) })
+               val slidingWindow = WindowFunctions.createSliding(3, { it: List<Int> -> println(it.sum()) })
                intStream.consumeEach {
-                   tumblingWindow.processData(it)
+                   slidingWindow.processData(it)
                }
            }
     }
-    
+
     // This line is not printed until the nested launch completes
     println("Coroutine scope is over")
 }
