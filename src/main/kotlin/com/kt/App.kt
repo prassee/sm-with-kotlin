@@ -18,7 +18,7 @@ fun main() = runBlocking { // this: CoroutineScope
     // Creates a coroutine scope
     coroutineScope {
            tumblingWindow(intStream)
-           slidingWindow(intStream)
+           // slidingWindow(intStream)
     }
 
     // This line is not printed until the nested launch completes
