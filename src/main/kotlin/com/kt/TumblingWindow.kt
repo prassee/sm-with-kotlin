@@ -9,11 +9,11 @@ package com.kt
  * [6 7 8]
  * ..
  */
-class TumblingWindow<T>(private val windowLen: Int, private val aggFn: (List<T>) -> Unit) {
+class TumblingWindow<T>(private val windowLen: Int, private val aggFn: (List<T>) -> Unit) : WindowFunction<T> {
     private var cache = mutableListOf<T>()
     private var state: WindowState = WindowState.INIT
 
-    fun processData(t: T) {
+    override fun processData(t: T) {
         when (state) {
             WindowState.INIT -> {
                 cache.add(t)
@@ -21,9 +21,9 @@ class TumblingWindow<T>(private val windowLen: Int, private val aggFn: (List<T>)
             }
             WindowState.ACCEPT -> {
                 if (cache.size == windowLen) {
-                   aggFn(cache)
-                   transitState()
-                   cache.clear()
+                    aggFn(cache)
+                    transitState()
+                    cache.clear()
                 }
                 cache.add(t)
             }

@@ -11,10 +11,10 @@ import java.util.*
  * [4 5 6]
  * ..
  */
-class SlidingWindow<T>(private val windowLen: Int, private val aggFn: (List<T>) -> Unit) {
+class SlidingWindow<T>(private val windowLen: Int, private val aggFn: (List<T>) -> Unit) : WindowFunction<T> {
     private val buffer = Buffer<T>(windowLen)
 
-    fun processData(t: T) {
+    override fun processData(t: T) {
         buffer.add(t)
         if (buffer.length == windowLen) {
             aggFn(buffer.getWindow())
@@ -23,7 +23,7 @@ class SlidingWindow<T>(private val windowLen: Int, private val aggFn: (List<T>) 
 }
 
 class Buffer<T>(val length: Int) {
-    private val queue: Queue<T> = LinkedList<T>()
+    private val queue: Queue<T> = LinkedList()
 
     fun add(t: T) {
         if (queue.size == length) {

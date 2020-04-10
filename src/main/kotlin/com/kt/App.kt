@@ -3,10 +3,14 @@
  */
 package com.kt
 
-import java.util.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
+@ExperimentalCoroutinesApi
 fun main() = runBlocking { // this: CoroutineScope
     val intStream = Channel<Int>()
     launch {
@@ -17,24 +21,49 @@ fun main() = runBlocking { // this: CoroutineScope
 
     // Creates a coroutine scope
     coroutineScope {
-           tumblingWindow(intStream)
-           // slidingWindow(intStream)
+        slidingWindow(intStream)
+    }
+    coroutineScope {
+        tumblingWindow(intStream)
+    }
+    coroutineScope {
+        windowOperation(intStream)
     }
 
     // This line is not printed until the nested launch completes
     println("Coroutine scope is over")
 }
 
+@ExperimentalCoroutinesApi
 suspend fun slidingWindow(intStream: Channel<Int>) {
-               val slidingWindow = WindowFunctions.createSliding(3, { it: List<Int> -> println(it.sum()) })
-               intStream.consumeEach {
-                   slidingWindow.processData(it)
-               }
+    val slidingWindow = WindowFunctions.createSliding(3
+    ) { it: List<Int> ->
+        println(it.sum())
+    }
+    intStream.consumeEach {
+        slidingWindow.processData(it)
+    }
 }
 
+@ExperimentalCoroutinesApi
 suspend fun tumblingWindow(intStream: Channel<Int>) {
-     val tumblingWindow = WindowFunctions.createTumbling(3, { it: List<Int> -> println(it.sum()) })
-               intStream.consumeEach {
-                    tumblingWindow.processData(it)
-                }
+    val tumblingWindow = WindowFunctions.createTumbling(3) { it: List<Int> -> intAdder(it) }
+    intStream.consumeEach {
+        tumblingWindow.processData(it)
+    }
+}
+
+@ExperimentalCoroutinesApi
+suspend fun windowOperation(intStream: Channel<Int>) {
+    val windFunc = WindowFunctions.createWindow<Int>("tumbling", 3) {
+        println(it.sum())
+    }
+    intStream.consumeEach {
+        windFunc.processData(it)
+    }
+
+}
+
+inline fun intAdder(its: List<Int>): Int {
+    return its.sum()
 }
